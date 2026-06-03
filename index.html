@@ -36,14 +36,16 @@
     </div>
 
     <div id="mainApp" class="max-w-6xl mx-auto hidden w-full">
-        <header class="mb-10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-4xl font-extrabold text-blue-400">QR-MASTER <span class="text-white">HUB</span></h1>
                 <p class="text-slate-400 mt-2">Benvenuto, samux06!</p>
             </div>
             
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-bold text-sm">💾 Esporta Backup</button>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="exportToWord()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold text-sm">📄 Esporta in Word</button>
+                
+                <button onclick="exportData()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-bold text-sm">💾 Esporta Backup (.json)</button>
                 <label class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold text-sm cursor-pointer">
                     📂 Importa Backup
                     <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
@@ -151,35 +153,27 @@
             });
         }
 
-        // === ECCO LA MAGIA: LA NUOVA FUNZIONE DI DOWNLOAD CON TESTO INCLUSO ===
         function downloadQR(id, name) {
             const qrDiv = document.getElementById(`qr-${id}`);
-            // Prendiamo l'immagine del QR generata
             const sourceElement = qrDiv.querySelector('img') || qrDiv.querySelector('canvas');
             
-            // Creiamo la nostra "Tela" (Canvas) invisibile
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Impostiamo le dimensioni: 300x300 per il QR + 80px in alto per scrivere il testo
             const qrSize = 300; 
-            canvas.width = qrSize + 40; // 20px di margine a destra e sinistra
-            canvas.height = qrSize + 100; // Spazio extra in alto per il titolo
+            canvas.width = qrSize + 40; 
+            canvas.height = qrSize + 100; 
             
-            // 1. Dipingiamo tutto lo sfondo di bianco
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 2. Scriviamo il nome del territorio in alto
-            ctx.fillStyle = "#000000"; // Colore nero per il testo
-            ctx.font = "bold 22px Arial"; // Stile e grandezza del testo
-            ctx.textAlign = "center"; // Centrato
-            ctx.fillText(name, canvas.width / 2, 40); // Posizioniamo a metà larghezza e 40px dall'alto
+            ctx.fillStyle = "#000000"; 
+            ctx.font = "bold 22px Arial"; 
+            ctx.textAlign = "center"; 
+            ctx.fillText(name, canvas.width / 2, 40); 
             
-            // 3. Disegniamo il QR Code sotto la scritta
             ctx.drawImage(sourceElement, 20, 60, qrSize, qrSize);
             
-            // 4. Creiamo il link e scarichiamo l'immagine finita!
             const link = document.createElement('a');
             link.href = canvas.toDataURL("image/png");
             link.download = `Territorio_${name.replace(/\s+/g, '_')}.png`;
@@ -200,7 +194,55 @@
             document.getElementById('previewArea').classList.add('hidden');
         }
 
-        // Sistema Esporta/Importa Backup
+        // === NUOVA FUNZIONE: ESPORTA IN WORD ===
+        function exportToWord() {
+            let archive = JSON.parse(localStorage.getItem('myQRs') || "[]");
+            if(archive.length === 0) {
+                alert("Non c'è nessun territorio da esportare!");
+                return;
+            }
+
+            // Iniziamo a creare la struttura del documento Word in formato HTML
+            let htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>I Miei Territori</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; text-align: center;">
+                    <h1 style="color: #333; margin-bottom: 30px;">Archivio Territori</h1>
+            `;
+
+            // Aggiungiamo ogni QR Code al documento
+            archive.forEach(item => {
+                const qrDiv = document.getElementById(`qr-${item.id}`);
+                if(qrDiv) {
+                    const img = qrDiv.querySelector('img') || qrDiv.querySelector('canvas');
+                    let imgData = img.tagName.toLowerCase() === 'canvas' ? img.toDataURL("image/png") : img.src;
+                    
+                    htmlContent += `
+                        <div style="margin-bottom: 50px; page-break-inside: avoid;">
+                            <h2 style="margin-bottom: 10px; color: #1e293b;">${item.name}</h2>
+                            <img src="${imgData}" width="250" height="250" style="border: 2px solid #ccc; padding: 10px;">
+                            <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Link: ${item.text}</p>
+                        </div>
+                    `;
+                }
+            });
+
+            htmlContent += `</body></html>`;
+
+            // Creiamo il file .doc e lo scarichiamo (il trucco \ufeff assicura che gli accenti si leggano bene)
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Tutti_i_Territori.doc';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Sistema Esporta/Importa Backup (.json)
         function exportData() {
             const data = localStorage.getItem('myQRs') || "[]";
             const blob = new Blob([data], { type: "application/json" });
