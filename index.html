@@ -194,7 +194,7 @@
             document.getElementById('previewArea').classList.add('hidden');
         }
 
-        // === NUOVA FUNZIONE: ESPORTA IN WORD ===
+        // === FUNZIONE AGGIORNATA: ESPORTA IN WORD ===
         function exportToWord() {
             let archive = JSON.parse(localStorage.getItem('myQRs') || "[]");
             if(archive.length === 0) {
@@ -202,7 +202,6 @@
                 return;
             }
 
-            // Iniziamo a creare la struttura del documento Word in formato HTML
             let htmlContent = `
                 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                 <head>
@@ -213,18 +212,17 @@
                     <h1 style="color: #333; margin-bottom: 30px;">Archivio Territori</h1>
             `;
 
-            // Aggiungiamo ogni QR Code al documento
             archive.forEach(item => {
                 const qrDiv = document.getElementById(`qr-${item.id}`);
                 if(qrDiv) {
                     const img = qrDiv.querySelector('img') || qrDiv.querySelector('canvas');
                     let imgData = img.tagName.toLowerCase() === 'canvas' ? img.toDataURL("image/png") : img.src;
                     
+                    // Modificato: h2 per il nome, niente link sotto, grandezza immagine forzata a 3x3 cm
                     htmlContent += `
-                        <div style="margin-bottom: 50px; page-break-inside: avoid;">
-                            <h2 style="margin-bottom: 10px; color: #1e293b;">${item.name}</h2>
-                            <img src="${imgData}" width="250" height="250" style="border: 2px solid #ccc; padding: 10px;">
-                            <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Link: ${item.text}</p>
+                        <div style="margin-bottom: 40px; page-break-inside: avoid;">
+                            <h2 style="margin-bottom: 10px; color: #000; font-size: 18px;">${item.name}</h2>
+                            <img src="${imgData}" width="114" height="114" style="width: 3cm; height: 3cm;">
                         </div>
                     `;
                 }
@@ -232,7 +230,6 @@
 
             htmlContent += `</body></html>`;
 
-            // Creiamo il file .doc e lo scarichiamo (il trucco \ufeff assicura che gli accenti si leggano bene)
             const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -242,7 +239,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Sistema Esporta/Importa Backup (.json)
         function exportData() {
             const data = localStorage.getItem('myQRs') || "[]";
             const blob = new Blob([data], { type: "application/json" });
