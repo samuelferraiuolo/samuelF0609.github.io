@@ -59,12 +59,12 @@
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Nome Territorio</label>
-                        <input type="text" id="qrName" placeholder="es. Territorio 1 - Via Roma" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-sm font-medium mb-1">Nome QR</label>
+                        <input type="text" id="qrName" placeholder="es. Sequence Terminale" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Link Google Maps</label>
-                        <input type="text" id="qrText" placeholder="https://maps.app.goo.gl/..." class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-sm font-medium mb-1">Dati QR (Link o Testo multiriga)</label>
+                        <textarea id="qrText" placeholder="Inserisci i dati andando a capo...&#10;es:&#10;400&#10;cnt&#10;cnt" rows="5" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                     </div>
                     <button onclick="generateAndPreview()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-all">
                         Genera Anteprima
@@ -80,7 +80,7 @@
             </div>
 
             <div class="lg:col-span-2 card p-6 rounded-2xl shadow-xl">
-                <h2 class="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">I Tuoi Territori</h2>
+                <h2 class="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">I Tuoi QR Salvati</h2>
                 <div id="archiveGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     </div>
             </div>
@@ -108,7 +108,7 @@
         function generateAndPreview() {
             const name = document.getElementById('qrName').value;
             const text = document.getElementById('qrText').value;
-            if(!name || !text) return alert("Inserisci nome e URL!");
+            if(!name || !text) return alert("Inserisci nome e dati!");
 
             document.getElementById('previewArea').classList.remove('hidden');
             const qrcodeDiv = document.getElementById('qrcode');
@@ -133,7 +133,7 @@
         function renderArchive() {
             const container = document.getElementById('archiveGrid');
             const archive = JSON.parse(localStorage.getItem('myQRs') || "[]");
-            container.innerHTML = archive.length === 0 ? "<p class='text-slate-500'>Nessun territorio salvato.</p>" : "";
+            container.innerHTML = archive.length === 0 ? "<p class='text-slate-500'>Nessun QR salvato.</p>" : "";
 
             archive.forEach(item => {
                 const card = document.createElement('div');
@@ -141,7 +141,7 @@
                 card.innerHTML = `
                     <div id="qr-${item.id}" class="bg-white p-2 rounded mb-2"></div>
                     <p class="font-bold text-blue-400 truncate w-full text-center">${item.name}</p>
-                    <p class="text-xs text-slate-500 truncate w-full text-center mb-3">${item.text}</p>
+                    <p class="text-xs text-slate-500 truncate w-full text-center mb-3 whitespace-pre-line">${item.text}</p>
                     <div class="flex gap-2 w-full">
                         <button onclick="downloadQR(${item.id}, '${item.name.replace(/'/g, "\\'")}')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-xs py-2 rounded font-bold">Scarica PNG</button>
                         <button onclick="deleteQR(${item.id})" class="bg-red-900 hover:bg-red-800 px-3 py-2 rounded text-xs">Elimina</button>
@@ -176,12 +176,12 @@
             
             const link = document.createElement('a');
             link.href = canvas.toDataURL("image/png");
-            link.download = `Territorio_${name.replace(/\s+/g, '_')}.png`;
+            link.download = `QR_${name.replace(/\s+/g, '_')}.png`;
             link.click();
         }
 
         function deleteQR(id) {
-            if(!confirm("Eliminare questo territorio dall'archivio?")) return;
+            if(!confirm("Eliminare questo QR dall'archivio?")) return;
             let archive = JSON.parse(localStorage.getItem('myQRs') || "[]");
             archive = archive.filter(item => item.id !== id);
             localStorage.setItem('myQRs', JSON.stringify(archive));
@@ -194,11 +194,10 @@
             document.getElementById('previewArea').classList.add('hidden');
         }
 
-        // === FUNZIONE AGGIORNATA: ESPORTA IN WORD ===
         function exportToWord() {
             let archive = JSON.parse(localStorage.getItem('myQRs') || "[]");
             if(archive.length === 0) {
-                alert("Non c'è nessun territorio da esportare!");
+                alert("Non c'è nessun QR da esportare!");
                 return;
             }
 
@@ -206,10 +205,10 @@
                 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                 <head>
                     <meta charset='utf-8'>
-                    <title>I Miei Territori</title>
+                    <title>I Miei QR Code</title>
                 </head>
                 <body style="font-family: Arial, sans-serif; text-align: center;">
-                    <h1 style="color: #333; margin-bottom: 30px;">Archivio Territori</h1>
+                    <h1 style="color: #333; margin-bottom: 30px;">Archivio QR Code</h1>
             `;
 
             archive.forEach(item => {
@@ -218,7 +217,6 @@
                     const img = qrDiv.querySelector('img') || qrDiv.querySelector('canvas');
                     let imgData = img.tagName.toLowerCase() === 'canvas' ? img.toDataURL("image/png") : img.src;
                     
-                    // Modificato: h2 per il nome, niente link sotto, grandezza immagine forzata a 3x3 cm
                     htmlContent += `
                         <div style="margin-bottom: 40px; page-break-inside: avoid;">
                             <h2 style="margin-bottom: 10px; color: #000; font-size: 18px;">${item.name}</h2>
@@ -234,7 +232,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'Tutti_i_Territori.doc';
+            link.download = 'Archivio_QR_Code.doc';
             link.click();
             URL.revokeObjectURL(url);
         }
@@ -245,7 +243,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = "backup_territori.json";
+            link.download = "backup_qr.json";
             link.click();
         }
 
