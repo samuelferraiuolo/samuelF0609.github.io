@@ -63,7 +63,7 @@
                         <input type="text" id="qrName" placeholder="es. Sequence Terminale" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Dati QR (Link o Testo multiriga)</label>
+                        <label class="block text-sm font-medium mb-1">Dati QR</label>
                         <textarea id="qrText" placeholder="Scrivi e premi Invio per andare a capo...&#10;es:&#10;400&#10;cnt&#10;cnt" rows="5" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                     </div>
                     <button onclick="generateAndPreview()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-all">
@@ -110,8 +110,8 @@
             const text = document.getElementById('qrText').value;
             if(!name || !text) return alert("Inserisci nome e dati!");
 
-            // TRUCCO PER TERMINALI HARDWARE: converte l'a capo testuale nell'Invio fisico (\r)
-            const hardwareText = text.replace(/\n/g, "\r");
+            // Utilizza i normali a capo del testo
+            const hardwareText = text;
 
             document.getElementById('previewArea').classList.remove('hidden');
             const qrcodeDiv = document.getElementById('qrcode');
@@ -122,7 +122,7 @@
                 colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
             });
 
-            tempQRData = { name, text, id: Date.now() };
+            tempQRData = { name, text: hardwareText, id: Date.now() };
         }
 
         function saveToArchive() {
@@ -152,9 +152,7 @@
                 `;
                 container.appendChild(card);
                 
-                // Converte di nuovo l'a capo in Invio fisico quando rigenera i QR dell'archivio
-               const hardwareText = text.replace(/\n/g, "\t");
-                new QRCode(document.getElementById(`qr-${item.id}`), { text: hardwareText, width: 120, height: 120 });
+                new QRCode(document.getElementById(`qr-${item.id}`), { text: item.text, width: 120, height: 120 });
             });
         }
 
