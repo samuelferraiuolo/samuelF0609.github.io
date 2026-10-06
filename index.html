@@ -153,7 +153,7 @@
                 container.appendChild(card);
                 
                 // Converte di nuovo l'a capo in Invio fisico quando rigenera i QR dell'archivio
-                const hardwareText = item.text.replace(/\n/g, "\r");
+               const hardwareText = text.replace(/\n/g, "\t");
                 new QRCode(document.getElementById(`qr-${item.id}`), { text: hardwareText, width: 120, height: 120 });
             });
         }
